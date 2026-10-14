@@ -23,3 +23,17 @@ def test_fees_reduce_outcomes():
 def test_both_strategies_use_same_market_paths():
     sim = RetirementSimulator(SimulationConfig(simulations=200))
     assert sim.returns.shape == (200, 30)
+
+def test_inflation_compounds_annual_withdrawals():
+    cfg = SimulationConfig(
+        starting_balance=1_000.0,
+        annual_withdrawal=100.0,
+        years=3,
+        simulations=1,
+        mean_return=0.0,
+        volatility=0.0,
+        annual_inflation=0.10,
+    )
+    result = RetirementSimulator(cfg).run_market()
+    # Withdrawals are 100, 110, and 121; returns are zero.
+    assert result["median_terminal_wealth"] == 669.0

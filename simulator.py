@@ -21,6 +21,7 @@ class SimulationConfig:
     mean_return: float = 0.07
     volatility: float = 0.16
     annual_fee: float = 0.0   # deducted from the credited return each year
+    annual_inflation: float = 0.0  # compounds withdrawals; 0 preserves fixed withdrawals
     seed: Optional[int] = 42  # fixed seed so results are reproducible
 
 
@@ -37,7 +38,8 @@ class RetirementSimulator:
         balance = np.full(c.simulations, c.starting_balance, dtype=float)
         ruined = np.zeros(c.simulations, dtype=bool)
         for y in range(c.years):
-            balance = (balance - c.annual_withdrawal) * (1.0 + credited[:, y] - c.annual_fee)
+            withdrawal = c.annual_withdrawal * (1.0 + c.annual_inflation) ** y
+            balance = (balance - withdrawal) * (1.0 + credited[:, y] - c.annual_fee)
             ruined |= balance <= 0
             balance = np.where(ruined, 0.0, balance)
         return {

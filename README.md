@@ -8,7 +8,7 @@ pip install -r requirements.txt -r requirements-dev.txt
 python simulator.py
 pytest
 ```
-Results are reproducible (fixed random seed, configurable).
+Results are reproducible (fixed random seed, configurable). Set `annual_inflation` in `SimulationConfig` to increase withdrawals each year (for example, `0.02` for 2%); the default `0.0` keeps withdrawals fixed. Returns remain nominal, and inflation adjusts withdrawals only.
 
 ## Example output (default settings: $500k, $25k/yr withdrawals, 30 years, 7% mean, 16% volatility, 10,000 runs)
 | Annual fee | Full market success | Floor 0% / cap 9.5% success |
@@ -21,5 +21,5 @@ Results are reproducible (fixed random seed, configurable).
 This is a **teaching model**, not a product illustration or advice.
 - The floor strategy looks very strong with no fees and **loses its advantage as fees rise** (see the 2% row). A free floor does not exist in real products.
 - Returns are drawn from a normal distribution. Real markets have fatter tails and different sequences.
-- It ignores taxes, inflation, surrender charges, participation rates and rider terms.
+- Inflation only adjusts withdrawals when `annual_inflation` is set; returns remain nominal. The model ignores taxes, surrender charges, participation rates and rider terms.
 - Do not use these numbers to sell or recommend anything.
