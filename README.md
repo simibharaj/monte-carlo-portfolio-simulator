@@ -34,6 +34,6 @@ The seeded outputs can differ because each distribution generates different path
 ## Read this before drawing conclusions
 This is a **teaching model**, not a product illustration or advice.
 - The floor strategy looks very strong with no fees and **loses its advantage as fees rise** (see the 2% row). A free floor does not exist in real products.
-- Returns are drawn from a normal distribution. Real markets have fatter tails and different sequences.
+- The selected normal or Student-t distribution is a simplified, stationary return model; real markets can have different tail behavior and changing return sequences.
 - Inflation only adjusts withdrawals when `annual_inflation` is set; returns remain nominal. The model ignores taxes, surrender charges, participation rates and rider terms.
 - Do not use these numbers to sell or recommend anything.
