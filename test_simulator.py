@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from simulator import RetirementSimulator, SimulationConfig
 
 def test_reproducible_with_seed():
@@ -37,3 +38,43 @@ def test_inflation_compounds_annual_withdrawals():
     result = RetirementSimulator(cfg).run_market()
     # Withdrawals are 100, 110, and 121; returns are zero.
     assert result["median_terminal_wealth"] == 669.0
+
+
+def test_student_t_returns_are_standardized_and_reproducible():
+    cfg = SimulationConfig(
+        simulations=20,
+        years=4,
+        return_distribution="student_t",
+        student_t_df=5,
+        seed=123,
+    )
+    sim = RetirementSimulator(cfg)
+    draws = np.random.default_rng(cfg.seed).standard_t(
+        df=cfg.student_t_df, size=(cfg.simulations, cfg.years)
+    )
+    expected = cfg.mean_return + cfg.volatility * draws * np.sqrt(
+        (cfg.student_t_df - 2) / cfg.student_t_df
+    )
+    np.testing.assert_allclose(sim.returns, np.maximum(expected, -1.0), rtol=1e-14, atol=1e-15)
+
+
+def test_student_t_rejects_degrees_of_freedom_without_finite_variance():
+    with pytest.raises(ValueError, match="finite and > 2"):
+        SimulationConfig(return_distribution="student_t", student_t_df=2)
+
+
+def test_unknown_return_distribution_is_rejected():
+    with pytest.raises(ValueError, match="return_distribution"):
+        SimulationConfig(return_distribution="lognormal")
+
+
+def test_student_t_simple_returns_cannot_exceed_total_loss():
+    cfg = SimulationConfig(
+        simulations=100,
+        years=10,
+        mean_return=0.0,
+        volatility=2.0,
+        return_distribution="student_t",
+        student_t_df=2.1,
+    )
+    assert np.all(RetirementSimulator(cfg).returns >= -1.0)

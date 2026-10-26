@@ -20,18 +20,37 @@ class SimulationConfig:
     simulations: int = 10_000
     mean_return: float = 0.07
     volatility: float = 0.16
+    return_distribution: str = "normal"  # "normal" or "student_t"
+    student_t_df: float = 5.0  # used only for student_t; must exceed 2
     annual_fee: float = 0.0   # deducted from the credited return each year
     annual_inflation: float = 0.0  # compounds withdrawals; 0 preserves fixed withdrawals
     seed: Optional[int] = 42  # fixed seed so results are reproducible
+
+    def __post_init__(self):
+        if self.return_distribution not in {"normal", "student_t"}:
+            raise ValueError("return_distribution must be 'normal' or 'student_t'")
+        if self.return_distribution == "student_t" and (
+            not np.isfinite(self.student_t_df) or self.student_t_df <= 2
+        ):
+            raise ValueError("student_t_df must be finite and > 2 for finite variance")
 
 
 class RetirementSimulator:
     def __init__(self, config: Optional[SimulationConfig] = None):
         self.cfg = config or SimulationConfig()
         rng = np.random.default_rng(self.cfg.seed)
-        # One shared set of return paths, so both strategies face identical markets.
-        self.returns = rng.normal(self.cfg.mean_return, self.cfg.volatility,
-                                  size=(self.cfg.simulations, self.cfg.years))
+        shape = (self.cfg.simulations, self.cfg.years)
+        if self.cfg.return_distribution == "normal":
+            sampled_returns = rng.normal(self.cfg.mean_return, self.cfg.volatility, size=shape)
+        else:
+            # Standardize Student-t draws to unit variance before applying the
+            # configured mean and volatility. A simple return cannot fall below -100%.
+            draws = rng.standard_t(df=self.cfg.student_t_df, size=shape)
+            draws *= np.sqrt((self.cfg.student_t_df - 2) / self.cfg.student_t_df)
+            sampled_returns = self.cfg.mean_return + self.cfg.volatility * draws
+        # A return below -100% is an impossible loss of more than the investment;
+        # model it as a total loss instead.
+        self.returns = np.maximum(sampled_returns, -1.0)
 
     def _run(self, credited: np.ndarray, label: str) -> Dict[str, float]:
         c = self.cfg
