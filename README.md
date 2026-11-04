@@ -22,7 +22,18 @@ for distribution in ("normal", "student_t"):
     print(distribution, RetirementSimulator(config).run_market())
 ```
 
-The seeded outputs can differ because each distribution generates different paths; equal input parameters do not make the simulated year-by-year returns identical. A Student-t model can produce more extreme outcomes, but this is still a simplified teaching comparison—not a forecast or product illustration.
+The seeded outputs can differ because each distribution generates different paths; equal input parameters do not make the simulated year-by-year returns identical. A Student-t model can produce more extreme outcomes, but this is still a simplified teaching comparison, not a forecast or product illustration.
+
+## Fee sensitivity chart (optional)
+
+Install the plotting dependency and generate a PNG comparing success rates across annual fees:
+
+```sh
+python -m pip install -r requirements-plot.txt
+python plot_fee_sensitivity.py --output fee_sensitivity.png
+```
+
+The default sweep uses 0%, 1% and 2% annual fees. A fixed seed gives each fee the same simulated market paths, so the plotted differences reflect the fee setting in this teaching model. The chart is not a forecast, product illustration, or advice.
 
 ## Example output (default settings: $500k, $25k/yr withdrawals, 30 years, 7% mean, 16% volatility, 10,000 runs)
 | Annual fee | Full market success | Floor 0% / cap 9.5% success |
