@@ -68,6 +68,33 @@ def test_unknown_return_distribution_is_rejected():
         SimulationConfig(return_distribution="lognormal")
 
 
+@pytest.mark.parametrize(
+    "floor, cap, message",
+    [
+        (0.20, 0.05, "floor must be less than or equal to cap"),
+        (float("nan"), 0.05, "floor and cap must be finite rates"),
+        (0.0, float("inf"), "floor and cap must be finite rates"),
+    ],
+)
+def test_floor_cap_rejects_invalid_bounds(floor, cap, message):
+    sim = RetirementSimulator(SimulationConfig(simulations=10))
+    with pytest.raises(ValueError, match=message):
+        sim.run_floor_cap(floor=floor, cap=cap)
+
+
+def test_equal_floor_and_cap_is_valid():
+    cfg = SimulationConfig(
+        starting_balance=100_000,
+        annual_withdrawal=0,
+        years=1,
+        simulations=1,
+        mean_return=0.10,
+        volatility=0,
+    )
+    result = RetirementSimulator(cfg).run_floor_cap(floor=0.05, cap=0.05)
+    assert result["median_terminal_wealth"] == 105_000
+
+
 def test_student_t_simple_returns_cannot_exceed_total_loss():
     cfg = SimulationConfig(
         simulations=100,

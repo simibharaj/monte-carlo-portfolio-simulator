@@ -72,6 +72,11 @@ class RetirementSimulator:
         return self._run(self.returns, "Full market exposure")
 
     def run_floor_cap(self, floor: float = 0.0, cap: float = 0.095) -> Dict[str, float]:
+        """Run with finite annual return bounds where the floor does not exceed the cap."""
+        if not np.isfinite(floor) or not np.isfinite(cap):
+            raise ValueError("floor and cap must be finite rates")
+        if floor > cap:
+            raise ValueError("floor must be less than or equal to cap")
         credited = np.clip(self.returns, floor, cap)
         return self._run(credited, f"Floor {floor*100:.1f}% / cap {cap*100:.1f}%")
 
