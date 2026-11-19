@@ -105,3 +105,53 @@ def test_student_t_simple_returns_cannot_exceed_total_loss():
         student_t_df=2.1,
     )
     assert np.all(RetirementSimulator(cfg).returns >= -1.0)
+
+
+@pytest.mark.parametrize(
+    "field, value",
+    [
+        ("starting_balance", float("nan")),
+        ("annual_withdrawal", float("inf")),
+        ("mean_return", float("nan")),
+        ("volatility", float("inf")),
+        ("annual_fee", float("nan")),
+        ("annual_inflation", float("inf")),
+    ],
+)
+def test_config_rejects_non_finite_scenario_values(field, value):
+    with pytest.raises(ValueError, match=f"{field} must be finite"):
+        SimulationConfig(**{field: value})
+
+
+@pytest.mark.parametrize(
+    "field, value, message",
+    [
+        ("starting_balance", -1, "starting_balance must be non-negative"),
+        ("annual_withdrawal", -1, "annual_withdrawal must be non-negative"),
+        ("mean_return", -1.01, "mean_return must be at least -1"),
+        ("volatility", -0.01, "volatility must be non-negative"),
+        ("annual_fee", -0.01, "annual_fee must be non-negative"),
+        ("annual_inflation", -1.01, "annual_inflation must be at least -1"),
+    ],
+)
+def test_config_rejects_out_of_domain_scenario_values(field, value, message):
+    with pytest.raises(ValueError, match=message):
+        SimulationConfig(**{field: value})
+
+
+@pytest.mark.parametrize(
+    "field, value",
+    [
+        ("years", 0),
+        ("years", -1),
+        ("years", 1.5),
+        ("years", True),
+        ("simulations", 0),
+        ("simulations", -1),
+        ("simulations", 1.5),
+        ("simulations", False),
+    ],
+)
+def test_config_requires_positive_integer_dimensions(field, value):
+    with pytest.raises(ValueError, match=f"{field} must be a positive integer"):
+        SimulationConfig(**{field: value})

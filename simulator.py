@@ -27,6 +27,44 @@ class SimulationConfig:
     seed: Optional[int] = 42  # fixed seed so results are reproducible
 
     def __post_init__(self):
+        if (
+            isinstance(self.years, (bool, np.bool_))
+            or not isinstance(self.years, (int, np.integer))
+            or self.years <= 0
+        ):
+            raise ValueError("years must be a positive integer")
+        if (
+            isinstance(self.simulations, (bool, np.bool_))
+            or not isinstance(self.simulations, (int, np.integer))
+            or self.simulations <= 0
+        ):
+            raise ValueError("simulations must be a positive integer")
+
+        numeric_fields = (
+            ("starting_balance", self.starting_balance),
+            ("annual_withdrawal", self.annual_withdrawal),
+            ("mean_return", self.mean_return),
+            ("volatility", self.volatility),
+            ("annual_fee", self.annual_fee),
+            ("annual_inflation", self.annual_inflation),
+        )
+        for name, value in numeric_fields:
+            if not np.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+
+        if self.starting_balance < 0:
+            raise ValueError("starting_balance must be non-negative")
+        if self.annual_withdrawal < 0:
+            raise ValueError("annual_withdrawal must be non-negative")
+        if self.mean_return < -1:
+            raise ValueError("mean_return must be at least -1 for simple returns")
+        if self.volatility < 0:
+            raise ValueError("volatility must be non-negative")
+        if self.annual_fee < 0:
+            raise ValueError("annual_fee must be non-negative")
+        if self.annual_inflation < -1:
+            raise ValueError("annual_inflation must be at least -1")
+
         if self.return_distribution not in {"normal", "student_t"}:
             raise ValueError("return_distribution must be 'normal' or 'student_t'")
         if self.return_distribution == "student_t" and (
